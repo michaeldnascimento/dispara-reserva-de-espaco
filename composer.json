@@ -1,0 +1,26 @@
+{
+  "name": "intranet/dispara-reserva-de-espaco",
+  "description": "description",
+  "keywords": [
+    "ttlock",
+    "fashop"
+  ],
+  "minimum-stability": "beta",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Michael D.",
+      "email": "michael.douglas@fm.usp.br"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  },
+  "require": {
+    "php": "5.6.*",
+    "guzzlehttp/guzzle": "6.5.5",
+    "ext-json": "*"
+  }
+}
