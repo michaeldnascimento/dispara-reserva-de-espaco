@@ -20,7 +20,7 @@ class Passcode extends TTLockAbstract
 	 */
 	private $accessToken = '';
 
-	public function setAccessToken($accessToken )
+	public function setAccessToken($accessToken)
 	{
 		$this->accessToken = $accessToken;
 	}

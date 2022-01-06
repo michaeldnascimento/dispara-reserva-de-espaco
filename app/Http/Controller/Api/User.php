@@ -24,7 +24,7 @@ class User extends TTLockAbstract
 	 * @throws \GuzzleHttp\Exception\GuzzleException | \Exception
 	 * @author 韩文博
 	 */
-	public function register($username, $password, $date )
+	public function register($username, $password, $date)
 	{
 		$response = $this->client->request( 'POST', '/v3/user/register', [
 			'form_params' => [
@@ -81,7 +81,7 @@ class User extends TTLockAbstract
 	 * @throws \GuzzleHttp\Exception\GuzzleException | \Exception
 	 * @author 韩文博
 	 */
-	public function list($startDate, $endDate, $pageNo, $pageSize, $date )
+	public function listUser($startDate, $endDate, $pageNo, $pageSize, $date )
 	{
 		$response = $this->client->request( 'POST', '/v3/user/list', [
 			'form_params' => [

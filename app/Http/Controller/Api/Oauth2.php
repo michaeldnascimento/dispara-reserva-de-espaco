@@ -24,7 +24,7 @@ class Oauth2 extends TTLockAbstract
 	 * @return array
 	 * @throws GuzzleException | Exception
 	 */
-	public function token(Request $request)
+	public function token($username, $password, $redirect_uri)
 	{
 
 		$response = $this->client->request( 'POST', '/oauth2/token', [

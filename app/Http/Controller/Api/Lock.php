@@ -39,7 +39,7 @@ class Lock extends TTLockAbstract
 	 * @throws \GuzzleHttp\Exception\GuzzleException | \Exception
 	 * @author 韩文博
 	 */
-	public function initialize($lockData, $lockAlias, $date )
+	public function initialize($lockData, $lockAlias, $date)
 	{
 		$response = $this->client->request( 'POST', '/v3/lock/initialize', [
 			'form_params' => [

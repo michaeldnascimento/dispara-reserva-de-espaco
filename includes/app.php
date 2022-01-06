@@ -14,9 +14,13 @@ require __DIR__ . '/../vendor/autoload.php';
 use \App\Utils\View;
 use \App\Common\Environment;
 use \App\Http\Middleware\Queue as MiddlewareQueue;
+use \App\Http\Controller\Api\TTLock;
 
 //CARREGA AS VARIAVEIS DE AMBIENTE DO PROJETO
 Environment::load(__DIR__. '/../');
+
+//DEFINE AS CONFIGURAÇÕES DE ACESSO API
+$ttlock = New TTLock(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
 
 //DEFINE A CONSTANTE DE URL
 define('URL', getenv('URL'));

@@ -19,6 +19,7 @@ namespace App\Http\Controller\Api;
  * @property Oauth2   $oauth2
  * @property Key      $key
  * @property Passcode $passcode
+ * @property IdentityCard   $identityCard
  */
 class TTLock
 {
@@ -54,6 +55,7 @@ class TTLock
 			"oauth2"   => Oauth2::class,
 			"key"      => Key::class,
 			"passcode" => Passcode::class,
+            "identityCard"   => IdentityCard::class,
 		];
 
 	/**
