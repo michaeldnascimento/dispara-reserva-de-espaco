@@ -66,7 +66,7 @@ class Database extends DB{
 
             //MONTA O BIND COM OS CAMPOS ENVIADOS
             foreach ($fields as $field):
-                 $this->bind(':'. $field, $values[$field]);
+                $this->bind(':'. $field, $values[$field]);
             endforeach;
 
 
@@ -92,24 +92,29 @@ class Database extends DB{
      * @param  string $fields
      * @return bool
      */
-    public function select($where = null, $order = null, $limit = null, $fields = '*')
+    public function select($fields = null, $join = null, $where = null, $order = null, $limit = null)
     {
         try {
-        //DADOS DA QUERY
-        $where = strlen($where) ? 'WHERE '.$where : '';
-        $order = strlen($order) ? 'ORDER BY '.$order : '';
-        $limit = strlen($limit) ? 'LIMIT '.$limit : '';
+            //DADOS DA QUERY
+            $join  = strlen($join) ? 'INNER JOIN '.$join : '';
+            $where = strlen($where) ? 'WHERE '.$where : '';
+            $order = strlen($order) ? 'ORDER BY '.$order : '';
+            $limit = strlen($limit) ? 'LIMIT '.$limit : '';
 
-        //MONTA A QUERY
-        $this->setQuery('SELECT '.$fields.' FROM '.$this->table.' '.$where.' '.$order.' '.$limit);
+            //MONTA A QUERY
+            //$this->setQuery('SELECT '.$fields.' FROM '.$this->table.' '.$where.' '.$order.' '.$limit);
+            $query = 'SELECT '.$fields.' FROM '.$this->table.' '.$join.' '.$where.' '.$order.' '.$limit;
 
-        if ($this->execute()) {
-            //EXECUTA A QUERY
-            return $this->single();
+            //EXECUTAR A QUERY
+            $this->setQuery($query);
 
-        } else {
-            return false;
-        }
+            if ($this->execute()) {
+                //EXECUTA A QUERY
+                return $this->resultSet();
+
+            } else {
+                return false;
+            }
         } catch (PDOException $e) {
             echo $e->getMessage();
         }

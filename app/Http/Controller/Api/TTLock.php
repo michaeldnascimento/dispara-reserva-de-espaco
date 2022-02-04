@@ -86,7 +86,7 @@ class TTLock
 	 * @return int
 	 * @author 韩文博
 	 */
-	public function getDateTimeMillisecond($dateTime )
+	public function getDateTimeMillisecond($dateTime)
 	{
 		$dateTime = $dateTime.".0";
 		list( $usec, $sec ) = explode( ".", $dateTime );

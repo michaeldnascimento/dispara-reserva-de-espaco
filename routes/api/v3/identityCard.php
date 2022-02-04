@@ -1,6 +1,7 @@
 <?php
 
 use \App\Http\Response;
+use \App\Http\Controller\Reservations\Anfiteatros;
 
 //ROTA PARA CRIAR NOVO CARTÃO DE ACESSO
 $obRouter->get('/api/v3/identityCard/addCard', [
@@ -12,8 +13,17 @@ $obRouter->get('/api/v3/identityCard/addCard', [
     //DATA INICIO E DATA FIM DA RESERVA
     $startDate = $ttlock->getDateTimeMillisecond(date('Y-m-d H:i:s'));
     $endDate = $ttlock->getDateTimeMillisecond(date('Y-m-d H:i:s',time()+3600));
-    return new Response(201, $ttlock->identityCard->addCard('3005712', '3989015034', 'Michael API Web', $startDate, $endDate, $date), 'application/json');
+    return new Response(201, $ttlock->identityCard->addCard('3005712', '195352793', 'Michael API Web', $startDate, $endDate, $date), 'application/json');
    }
+]);
+
+//ROTA PARA CRIAR NOVO CARTÃO DE ACESSO DAY (CRON)
+$obRouter->get('/api/v3/identityCard/addCardDayCron', [
+    function($request) {
+
+        return new Response(201, Anfiteatros::getReservations($request), 'application/json');
+
+    }
 ]);
 
 //ROTA PARA GERAR LISTA DE CARTÃO CADASTRADO
@@ -34,6 +44,6 @@ $obRouter->get('/api/v3/identityCard/delete', [
         $ttlock->identityCard->setAccessToken(getenv('ACCESS_TOKEN'));
         //DATA EM MILISSEGUNDO
         $date = $ttlock->getDateTimeMillisecond(date('Y-m-d H:i:s'));
-        return new Response(200, $ttlock->identityCard->delete('3005712', '11345926', $date), 'application/json');
+        return new Response(200, $ttlock->identityCard->delete('3005712', '11380986', $date), 'application/json');
     }
 ]);

@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Request;
 use App\Http\Response;
-use App\Model\Entity\User;
+use App\Model\Entity\Reservations;
 use Closure;
 use Exception;
 
@@ -12,7 +12,7 @@ class UserBasicAuth {
 
     /**
      * Método responsável por retornar uma instância de usuário autenticado
-     * @return User
+     * @return Reservations
      */
     private function getBasicAuthUser()
     {
@@ -22,10 +22,10 @@ class UserBasicAuth {
         }
 
         //BUSCA O USUÁRIO POR E-MAIL
-        $obUser = User::getUserByEmail($_SERVER['PHP_AUTH_USER']);
+        $obUser = Reservations::getUserByEmail($_SERVER['PHP_AUTH_USER']);
 
         //VERIFICA A INSTANCIA
-        if (!$obUser instanceof User){
+        if (!$obUser instanceof Reservations){
             return false;
         }
 
