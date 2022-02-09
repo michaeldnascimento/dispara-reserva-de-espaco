@@ -21,7 +21,7 @@ $obRouter->get('/api/v3/identityCard/addCard', [
 $obRouter->get('/api/v3/identityCard/addCardDayCron', [
     function($request) {
 
-        return new Response(201, Anfiteatros::getReservations($request), 'application/json');
+        return new Response(201, Anfiteatros::getReservations($request), 'text/html');
 
     }
 ]);

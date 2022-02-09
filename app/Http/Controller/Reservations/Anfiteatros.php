@@ -10,6 +10,143 @@ use PDOStatement;
 class Anfiteatros {
 
     /**
+     * Método responsável por gravar dados reservas/cracha na api
+     * @param int $lockId
+     * @param int $num_cracha
+     * @param string $nome
+     * @param string $data_agendamento
+     * @param string $hora_inicio
+     * @param string $hora_fim
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public static function addCardTTLock($lockId, $num_cracha, $nome, $data_agendamento, $hora_inicio, $hora_fim){
+
+        //DEFINE AS CONFIGURAÇÕES DE ACESSO API
+        $ttlock = New TTLock(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
+
+        //SET TOKEN DE ACESSO
+        $ttlock->identityCard->setAccessToken(getenv('ACCESS_TOKEN'));
+
+        //DATA E HORA ATUAL EM MILISSEGUNDO
+        $dateTimeInputApi = $ttlock->getDateTimeMillisecond(date('Y-m-d H:i:s'));
+
+        //CONVERTE HORA INICIO E HORA FIM NO PADRÃO DATEIME
+        $dataTimeInit   = $data_agendamento. " " . $hora_inicio;
+        $dateTimeFinish = $data_agendamento . " " . $hora_fim;
+
+        //DATA INICIO E DATA FIM DA RESERVA EM MILISSEGUNDO
+        $startDateReservation = $ttlock->getDateTimeMillisecond($dataTimeInit);
+        $endDateReservartion = $ttlock->getDateTimeMillisecond($dateTimeFinish);
+
+        //GRAVA CRACHÁ DO RESPONSAVEL NA API
+        return $ttlock->identityCard->addCard($lockId, $num_cracha, $nome, $startDateReservation, $endDateReservartion, $dateTimeInputApi);
+
+    }
+
+
+    /**
+     * Método responsável por gerenciar resultados e gravar solicitante na api
+     * @param array $reservations
+     * @return string
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public static function createdCrachaSolicitante($reservations)
+    {
+
+        //GRAVA O RESPONSÁVEL NA API E RETORNA O RESULTADO
+        $returnApiSolicitante = self::addCardTTLock($reservations['lockId'], $reservations[0]['solicitante_num_cracha'], $reservations[0]['solicitante_nome'], $reservations['data_agendamento'], $reservations['hora_inicio'], $reservations['hora_fim']);
+
+        //REGISTRAR RETORNO
+        if ($returnApiSolicitante['cardId'] != '') {
+
+            //REGISTRAR O RETORNO POSITIVO NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Solicitante', 1);
+
+            //RET0RNA SE GRAVOU O CRACHÁ SOLICITANTE
+            return "Crachá: " . $reservations[0]['solicitante_num_cracha'] . " do Solicitante: " . $reservations[0]['solicitante_email'] . " - <b>salvo com sucesso via api</b>";
+
+        } elseif ($returnApiSolicitante['errcode'] == 1){
+
+
+            //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Solicitante', 2);
+
+            //MSG DE ERRO API
+            return "Crachá: " . $reservations[0]['solicitante_num_cracha'] . " do Solicitante: " . $reservations[0]['solicitante_email'] . " - <b>Falha ao se conectar ". $reservations['sala'] ."</b>";
+
+        } elseif ($returnApiSolicitante['errcode'] == -2012){
+
+            //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Solicitante', 2);
+
+            //MSG DE ERRO API
+            return "Crachá: " . $reservations[0]['solicitante_num_cracha'] . " do Solicitante: " . $reservations[0]['solicitante_email'] . " - <b>Gatway Não conectado a fechadura ". $reservations['sala'] ."</b>";
+
+        }else {
+
+            //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Solicitante', 2);
+
+            //MSG DE ERRO API
+            return "Crachá: " . $reservations[0]['solicitante_num_cracha'] . " do Solicitante: " . $reservations[0]['solicitante_email'] . " - <b>Error ao cadastrar o crachá via api</b>";
+        }
+
+
+    }
+
+
+    /**
+     * Método responsável por gerenciar resultados e gravar responsável na api
+     * @param array $reservations
+     * @return string
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public static function createdCrachaResponsavel($reservations)
+    {
+
+        //GRAVA O RESPONSÁVEL NA API E RETORNA O RESULTADO
+        $returnApiResponsavel = self::addCardTTLock($reservations['lockId'], $reservations[0]['responsavel_num_cracha'], $reservations[0]['responsavel_nome'], $reservations['data_agendamento'], $reservations['hora_inicio'], $reservations['hora_fim']);
+
+        //REGISTRAR RETORNO
+        if ($returnApiResponsavel['cardId'] != '') {
+
+            //REGISTRAR O RETORNO POSITIVO NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Responsavel', 1);
+
+            //RET0RNA SE GRAVOU O CRACHÁ RESPONSÁVEL
+            return "Crachá: " . $reservations[0]['responsavel_num_cracha'] . " do Resposável: " . $reservations[0]['responsavel_email'] . " - <b>salvo com sucesso via api</b>";
+
+        } elseif ($returnApiResponsavel['errcode'] == 1){
+
+            //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Responsavel', 2);
+
+            //MSG DE ERRO API
+            return "Crachá: " . $reservations[0]['responsavel_num_cracha'] . " do Resposável: " . $reservations[0]['responsavel_email'] . " - <b>Falha ao se conectar ". $reservations['sala'] ."</b>";
+
+        } elseif ($returnApiResponsavel['errcode'] == -2012){
+
+            //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Responsavel', 2);
+
+            //MSG DE ERRO API
+            return "Crachá: " . $reservations[0]['responsavel_num_cracha'] . " do Resposável: " . $reservations[0]['responsavel_email'] . " - <b>Gatway Não conectado a fechadura ". $reservations['sala'] ."</b>";
+
+        } else {
+
+            //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+            self::updateChachaSendApi($reservations['id_agendamento'], 'Responsavel', 2);
+
+            //MSG DE ERRO API
+            return "Crachá: " . $reservations[0]['responsavel_num_cracha'] . " do Resposável: " . $reservations[0]['responsavel_email'] . " - <b>Error ao cadastrar o crachá via api</b>";
+        }
+
+
+    }
+
+
+    /**
      * Método responsável por gravar se foi enviado o crachá para api
      * @param int $id_agendamento
      * @param string $key
@@ -88,27 +225,11 @@ class Anfiteatros {
                     //RETORNA DADOS DO CONTATO E UNIFICAM EM UM UNICO ARRAY
                     $mergeReservationsDay = array_merge($contactReservationsDay, $arr);
 
-                    echo "ID Agendamento: ".$mergeReservationsDay['id_agendamento']."/ Sala: ".$mergeReservationsDay['sala']."/ Data: ".$mergeReservationsDay['data_agendamento']."/ Hora Inicio: ".$mergeReservationsDay['hora_inicio']."/ Hora Fim: ".$mergeReservationsDay['hora_fim']." " . "<br/>";
+                    echo "<p>" . "ID Agendamento: ". $mergeReservationsDay['id_agendamento']. " / Sala: ".$mergeReservationsDay['sala']. "/ Data: ".$mergeReservationsDay['data_agendamento']. " / Hora Inicio: ".$mergeReservationsDay['hora_inicio']. "/ Hora Fim: " .$mergeReservationsDay['hora_fim']. "<p/>";
+
 
                     //VERIFICA SE EXISTE O LOCK ID NA SALA (LOCK ID FECHADURA POR SALA DE AULA)
                     if ($mergeReservationsDay['lockId'] != ''){
-
-                        //DEFINE AS CONFIGURAÇÕES DE ACESSO API
-                        $ttlock = New TTLock(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
-
-                        //SET TOKEN DE ACESSO
-                        $ttlock->identityCard->setAccessToken(getenv('ACCESS_TOKEN'));
-
-                        //DATA E HORA ATUAL EM MILISSEGUNDO
-                        $dateTimeInputApi = $ttlock->getDateTimeMillisecond(date('Y-m-d H:i:s'));
-
-                        //CONVERTE HORA INICIO E HORA FIM NO PADRÃO DATEIME
-                        $dataTimeInit   = $mergeReservationsDay['data_agendamento'] . " " . $mergeReservationsDay['hora_inicio'];
-                        $dateTimeFinish = $mergeReservationsDay['data_agendamento'] . " " . $mergeReservationsDay['hora_fim'];
-
-                        //DATA INICIO E DATA FIM DA RESERVA EM MILISSEGUNDO
-                        $startDateReservation = $ttlock->getDateTimeMillisecond($dataTimeInit);
-                        $endDateReservartion = $ttlock->getDateTimeMillisecond($dateTimeFinish);
 
                         //VERIFICA SE O CRACHÁ DO RESPONSÁVEL SE JÁ FOI ENVIADO
                         if ($mergeReservationsDay[0]['responsavel_send_api'] != 1) {
@@ -116,33 +237,15 @@ class Anfiteatros {
                             //VERIFICA SE EXISTE O NÚMERO DO CRACHÁ DO RESPONSAVEL
                             if ($mergeReservationsDay[0]['responsavel_num_cracha'] != '') {
 
+                                $msgReturno = self::createdCrachaResponsavel((array)$mergeReservationsDay);
 
-                                //GRAVA CRACHÁ DO RESPONSAVEL NA API
-                                $returnApiResponsavel = $ttlock->identityCard->addCard($mergeReservationsDay['lockId'], $mergeReservationsDay[0]['responsavel_num_cracha'], $mergeReservationsDay[0]['responsavel_nome'], $startDateReservation, $endDateReservartion, $dateTimeInputApi);
-
-                                //REGISTRAR RETORNO
-                                if ($returnApiResponsavel == true) {
-
-                                    //REGISTRAR O RETORNO POSITIVO NO BANCO DE DADOS
-                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Responsavel', 1);
-
-
-                                    //RET0RNA SE GRAVOU O CRACHÁ RESPONSÁVEL
-                                    echo "Crachá: " . $mergeReservationsDay[0]['responsavel_num_cracha'] . " do Resposável: " . $mergeReservationsDay[0]['responsavel_email'] . " - <b>salvo com sucesso via api</b>" . "<br/>";
-
-                                }else{
-
-                                    //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
-                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Responsavel', 2);
-
-                                    //MSG DE ERRO API
-                                    echo "Crachá: " . $mergeReservationsDay[0]['responsavel_num_cracha'] . " do Resposável: " . $mergeReservationsDay[0]['responsavel_email'] . " - <b>Error ao cadastrar o crachá via api</b>" . "<br/>";
-                                }
+                                echo $msgReturno . "<br/>";
 
                             } else {
                                 //CASO NÃO EXISTIR O NÚMERO DO CRACHÁ RESPONSÁVEL
                                 echo "Crachá Responsável não localizado" . "<br/>";
                             }
+
 
                         }else {
                             //CHACHÁ JÁ ESTÁ SALVO NA API
@@ -155,47 +258,29 @@ class Anfiteatros {
                             //VERIFICA SE EXISTE O NÚMERO DO CRACHÁ SOLICITANTE
                             if ($mergeReservationsDay[0]['solicitante_num_cracha'] != '') {
 
-                                //GRAVA CRACHÁ DO SOLICITANTE NA API
-                                $returnApiSolicitante = $ttlock->identityCard->addCard($mergeReservationsDay['lockId'], $mergeReservationsDay[0]['solicitante_num_cracha'], $mergeReservationsDay[0]['solicitante_nome'], $mergeReservationsDay['hora_inicio'], $mergeReservationsDay['hora_fim'], $date);
+                                $msgReturno = self::createdCrachaSolicitante((array)$mergeReservationsDay);
 
-
-                                //REGISTRAR RETORNO
-                                if ($returnApiSolicitante == true) {
-
-                                    //REGISTRAR O RETORNO POSITIVO NO BANCO DE DADOS
-                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Solicitante', 1);
-
-                                    //RET0RNA SE GRAVOU O CRACHÁ SOLICITANTE
-                                    echo "Crachá: " . $mergeReservationsDay[0]['solicitante_num_cracha'] . " do Solicitante: " . $mergeReservationsDay[0]['solicitante_email'] . " - <b>salvo com sucesso via api</b>" . "<br/>";
-
-                                }else{
-
-                                    //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
-                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Solicitante', 2);
-
-                                    //MSG DE ERRO API
-                                    echo "Crachá: " . $mergeReservationsDay[0]['solicitante_num_cracha'] . " do Resposável: " . $mergeReservationsDay[0]['solicitante_email'] . " - <b>Error ao cadastrar o crachá via api</b>" . "<br/>";
-                                }
+                                echo $msgReturno . "<hr/>";
 
                             }else {
                                 //CASO NÃO EXISTIR O NÚMERO DO CRACHÁ SOLICITNANTE
-                                echo "Crachá Solicitante não localizado"  . "<br/>";
+                                echo "Crachá Solicitante não localizado"  . "<hr/>";
                             }
 
                         }else {
                             //CHACHÁ JÁ ESTÁ SALVO NA API
-                            echo "Chachá Solicitante já cadastrado na api." . "<br/>";
+                            echo "Chachá Solicitante já cadastrado na api." . "<hr/>";
                         }
 
                     }else {
                         //SE NÃO EXISTIR O LOCK ID REGISTRADO NO BANCO
-                        echo "Número Sala e Lock ID não localizado!"  . "<br/>";
+                        echo "Número Sala e Lock ID não localizado!"  . "<hr/>";
                     }
 
-                    echo "<pre>";
-                    print_r($mergeReservationsDay);
-                    //print_r($lockId);
 
+                } else {
+
+                    echo "Contato não localizado" . "<hr/>";
 
                 }
 
@@ -203,32 +288,12 @@ class Anfiteatros {
 
         } else {
 
-            return 'Nao possui agenda para hoje';
+            return 'Não possui reservas Anfiteatro no dia';
 
         }
 
-//        echo "<pre>";
-//        print_r($mergeReservationsDay);
-        //print_r($obj['id']);
-        exit;
-
-        //OBTÉM O DEPOIMENTO DO BANCO DE DADOS
-        $obTestimony = EntityTestimony::getTestimonyById($id);
-
-        //VALIDA A INSTANCIA
-        if(!$obTestimony instanceof EntityTestimony){
-            $request->getRouter()->redirect('/admin/testimonies');
-        }
-
-        //CONTEÚDO DO FORMULÁRIO
-        $content = View::render('admin/modules/testimonies/form', [
-            'title'    => 'Editar depoimento',
-            'nome'     => $obTestimony->nome,
-            'mensagem' => $obTestimony->mensagem,
-            'status' => self::getStatus($request)
-        ]);
-
-        return parent::getPanel('Editar depoimento > WDEV', $content, 'testimonies');
+        return 'Carga Reservas Finalizada.';
     }
 
-}
+
+    }

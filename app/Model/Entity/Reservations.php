@@ -98,7 +98,7 @@ class Reservations {
      * @param int $value
      * @return bool
      */
-    public function updateSolicitanteChacha($id_agendamento, $value)
+    public static function updateSolicitanteChacha($id_agendamento, $value)
     {
 
         //REGISTRAR SE FOI ENVIADO O CHACHÁ SOLICITANTE VIA API
@@ -113,7 +113,7 @@ class Reservations {
      * @param int $value
      * @return bool
      */
-    public function updateReponsavelChacha($id_agendamento, $value)
+    public static function updateReponsavelChacha($id_agendamento, $value)
     {
 
         //REGISTRAR SE FOI ENVIADO O CHACHÁ RESPONSÁVEL VIA API

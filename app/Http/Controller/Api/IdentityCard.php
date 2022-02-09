@@ -53,7 +53,8 @@ class IdentityCard extends TTLockAbstract
         if( $response->getStatusCode() === 200 && !isset( $body['errcode'] ) ){
             return (array)$body;
         } else{
-            throw new \Exception( "errcode {$body['errcode']} errmsg {$body['errmsg']} errmsg : {$body['errmsg']}" );
+            //throw new \Exception( "errcode {$body['errcode']} errmsg {$body['errmsg']} errmsg : {$body['errmsg']}" );
+            return (array)$body;
         }
     }
 
