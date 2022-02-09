@@ -29,13 +29,13 @@ class IdentityCard extends TTLockAbstract
     public function addCard($lockId, $cardNumber, $cardName, $startDate, $endDate, $date)
     {
 
-        echo $lockId . '<br>';
-        echo $cardNumber . '<br>';
-        echo $cardName . '<br>';
-        echo $startDate . '<br>';
-        echo $endDate . '<br>';
-        echo $date . '<br>';
-        exit;
+//        echo $lockId . '<br>';
+//        echo $cardNumber . '<br>';
+//        echo $cardName . '<br>';
+//        echo $startDate . '<br>';
+//        echo $endDate . '<br>';
+//        echo $date . '<br>';
+//        exit;
         $response = $this->client->request( 'POST', '/v3/identityCard/addForReversedCardNumber', [
             'form_params' => [
                 'clientId'           => $this->clientId,

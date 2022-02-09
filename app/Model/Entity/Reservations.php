@@ -93,20 +93,32 @@ class Reservations {
     }
 
     /**
-     * Método responsável por atualizar os dados no banco
+     * Método responsável por atualizar se foi salvo o chachá solicitante na api
+     * @param int $id_agendamento
+     * @param int $value
      * @return bool
      */
-    public function atualizar()
+    public function updateSolicitanteChacha($id_agendamento, $value)
     {
 
-        $this->updated_date = date('Y-m-d H:i:s');
+        //REGISTRAR SE FOI ENVIADO O CHACHÁ SOLICITANTE VIA API
+        return (new Database('anfiteatrofm','agendamentos_contatos'))->update('id_agendamento = '. $id_agendamento, [
+            'solicitante_send_api'  => $value
+        ]);
+    }
 
-        //ATUALIZA O DEPOIMENTO NO BANCO DE DADOS
-        return (new Database('nefroz','usuarios'))->update('id = '. $this->id, [
-            'nome'  => $this->nome,
-            'email' => $this->email,
-            'senha' => $this->senha,
-            'updated_date' => $this->updated_date
+    /**
+     * Método responsável por atualizar se foi salvo o chachá responsavel na api
+     * @param int $id_agendamento
+     * @param int $value
+     * @return bool
+     */
+    public function updateReponsavelChacha($id_agendamento, $value)
+    {
+
+        //REGISTRAR SE FOI ENVIADO O CHACHÁ RESPONSÁVEL VIA API
+        return (new Database('anfiteatrofm','agendamentos_contatos'))->update('id_agendamento = '. $id_agendamento, [
+            'responsavel_send_api'  => $value
         ]);
     }
 
@@ -164,9 +176,11 @@ class Reservations {
                     responsavel_nome,
                     responsavel_email,
                     responsavel_num_cracha,
+                    responsavel_send_api,
                     solicitante_nome,
                     solicitante_email,
-                    solicitante_num_cracha',
+                    solicitante_num_cracha,
+                    solicitante_send_api',
             'agendamentos_contatos',
             '',
             'id_agendamento =  '.$id.' ',
@@ -192,6 +206,7 @@ class Reservations {
                     reservas.nome_disciplina,
                     salas.sala,
                     salas.numero,
+                    salas.lockId,
                     
                     reserva_situacao.situacao,
                     reservas.id_reserva_situacao,

@@ -10,6 +10,27 @@ use PDOStatement;
 class Anfiteatros {
 
     /**
+     * Método responsável por gravar se foi enviado o crachá para api
+     * @param int $id_agendamento
+     * @param string $key
+     * @param int $value
+     * @return bool|string
+     */
+    public static function updateChachaSendApi($id_agendamento, $key, $value)
+    {
+
+        if($id_agendamento != '' AND $key == 'Responsavel') {
+            return EntityReservations::updateReponsavelChacha($id_agendamento, $value);
+        }
+
+        if($id_agendamento != '' AND $key == 'Solicitante') {
+            return EntityReservations::updateSolicitanteChacha($id_agendamento, $value);
+        }
+
+        return 'Id Agendamento não foi enviado';
+    }
+
+    /**
      * Método responsável por consultar o salas
      * @param int $numSala
      * @return EntityReservations|PDOStatement|string
@@ -67,11 +88,10 @@ class Anfiteatros {
                     //RETORNA DADOS DO CONTATO E UNIFICAM EM UM UNICO ARRAY
                     $mergeReservationsDay = array_merge($contactReservationsDay, $arr);
 
-                    //RESPONSAVEL POR BUSCAR O LOCK ID FECHADURA POR SALA DE AULA
-                    $returnlockId = self::lockIdSala($arr['numero']);
+                    echo "ID Agendamento: ".$mergeReservationsDay['id_agendamento']."/ Sala: ".$mergeReservationsDay['sala']."/ Data: ".$mergeReservationsDay['data_agendamento']."/ Hora Inicio: ".$mergeReservationsDay['hora_inicio']."/ Hora Fim: ".$mergeReservationsDay['hora_fim']." " . "<br/>";
 
-                    //VERIFICA SE EXISTE O LOCK ID NA SALA
-                    if ($returnlockId['lockId'] != ''){
+                    //VERIFICA SE EXISTE O LOCK ID NA SALA (LOCK ID FECHADURA POR SALA DE AULA)
+                    if ($mergeReservationsDay['lockId'] != ''){
 
                         //DEFINE AS CONFIGURAÇÕES DE ACESSO API
                         $ttlock = New TTLock(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
@@ -79,17 +99,97 @@ class Anfiteatros {
                         //SET TOKEN DE ACESSO
                         $ttlock->identityCard->setAccessToken(getenv('ACCESS_TOKEN'));
 
-                        //DATA EM MILISSEGUNDO
-                        $date = $ttlock->getDateTimeMillisecond(date('Y-m-d H:i:s'));
+                        //DATA E HORA ATUAL EM MILISSEGUNDO
+                        $dateTimeInputApi = $ttlock->getDateTimeMillisecond(date('Y-m-d H:i:s'));
 
-                        //GRAVA CRACHÁ DO RESPONSAVEL NA API
-                        $ttlock->identityCard->addCard($returnlockId['lockId'], $mergeReservationsDay[0]['responsavel_num_cracha'], $mergeReservationsDay[0]['responsavel_nome'], $mergeReservationsDay['hora_inicio'],  $mergeReservationsDay['hora_fim'], $date);
+                        //CONVERTE HORA INICIO E HORA FIM NO PADRÃO DATEIME
+                        $dataTimeInit   = $mergeReservationsDay['data_agendamento'] . " " . $mergeReservationsDay['hora_inicio'];
+                        $dateTimeFinish = $mergeReservationsDay['data_agendamento'] . " " . $mergeReservationsDay['hora_fim'];
 
-                        //GRAVA CRACHÁ DO RESPONSAVEL NA API
-                        //$ttlock->identityCard->addCard($returnlockId['lockId'], '195352793', 'Michael API Web', $startDate, $endDate, $date);
+                        //DATA INICIO E DATA FIM DA RESERVA EM MILISSEGUNDO
+                        $startDateReservation = $ttlock->getDateTimeMillisecond($dataTimeInit);
+                        $endDateReservartion = $ttlock->getDateTimeMillisecond($dateTimeFinish);
+
+                        //VERIFICA SE O CRACHÁ DO RESPONSÁVEL SE JÁ FOI ENVIADO
+                        if ($mergeReservationsDay[0]['responsavel_send_api'] != 1) {
+
+                            //VERIFICA SE EXISTE O NÚMERO DO CRACHÁ DO RESPONSAVEL
+                            if ($mergeReservationsDay[0]['responsavel_num_cracha'] != '') {
+
+
+                                //GRAVA CRACHÁ DO RESPONSAVEL NA API
+                                $returnApiResponsavel = $ttlock->identityCard->addCard($mergeReservationsDay['lockId'], $mergeReservationsDay[0]['responsavel_num_cracha'], $mergeReservationsDay[0]['responsavel_nome'], $startDateReservation, $endDateReservartion, $dateTimeInputApi);
+
+                                //REGISTRAR RETORNO
+                                if ($returnApiResponsavel == true) {
+
+                                    //REGISTRAR O RETORNO POSITIVO NO BANCO DE DADOS
+                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Responsavel', 1);
+
+
+                                    //RET0RNA SE GRAVOU O CRACHÁ RESPONSÁVEL
+                                    echo "Crachá: " . $mergeReservationsDay[0]['responsavel_num_cracha'] . " do Resposável: " . $mergeReservationsDay[0]['responsavel_email'] . " - <b>salvo com sucesso via api</b>" . "<br/>";
+
+                                }else{
+
+                                    //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Responsavel', 2);
+
+                                    //MSG DE ERRO API
+                                    echo "Crachá: " . $mergeReservationsDay[0]['responsavel_num_cracha'] . " do Resposável: " . $mergeReservationsDay[0]['responsavel_email'] . " - <b>Error ao cadastrar o crachá via api</b>" . "<br/>";
+                                }
+
+                            } else {
+                                //CASO NÃO EXISTIR O NÚMERO DO CRACHÁ RESPONSÁVEL
+                                echo "Crachá Responsável não localizado" . "<br/>";
+                            }
+
+                        }else {
+                            //CHACHÁ JÁ ESTÁ SALVO NA API
+                            echo "Chachá Responsável já cadastrado na api." . "<br/>";
+                        }
+
+                        //VERIFICA SE O CRACHÁ DO RESPONSÁVEL SE JÁ FOI ENVIADO
+                        if ($mergeReservationsDay[0]['solicitante_send_api'] != 1) {
+
+                            //VERIFICA SE EXISTE O NÚMERO DO CRACHÁ SOLICITANTE
+                            if ($mergeReservationsDay[0]['solicitante_num_cracha'] != '') {
+
+                                //GRAVA CRACHÁ DO SOLICITANTE NA API
+                                $returnApiSolicitante = $ttlock->identityCard->addCard($mergeReservationsDay['lockId'], $mergeReservationsDay[0]['solicitante_num_cracha'], $mergeReservationsDay[0]['solicitante_nome'], $mergeReservationsDay['hora_inicio'], $mergeReservationsDay['hora_fim'], $date);
+
+
+                                //REGISTRAR RETORNO
+                                if ($returnApiSolicitante == true) {
+
+                                    //REGISTRAR O RETORNO POSITIVO NO BANCO DE DADOS
+                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Solicitante', 1);
+
+                                    //RET0RNA SE GRAVOU O CRACHÁ SOLICITANTE
+                                    echo "Crachá: " . $mergeReservationsDay[0]['solicitante_num_cracha'] . " do Solicitante: " . $mergeReservationsDay[0]['solicitante_email'] . " - <b>salvo com sucesso via api</b>" . "<br/>";
+
+                                }else{
+
+                                    //CASO RETORNE COM ERRO, REGISTAR NO BANCO DE DADOS
+                                    self::updateChachaSendApi($mergeReservationsDay['id_agendamento'], 'Solicitante', 2);
+
+                                    //MSG DE ERRO API
+                                    echo "Crachá: " . $mergeReservationsDay[0]['solicitante_num_cracha'] . " do Resposável: " . $mergeReservationsDay[0]['solicitante_email'] . " - <b>Error ao cadastrar o crachá via api</b>" . "<br/>";
+                                }
+
+                            }else {
+                                //CASO NÃO EXISTIR O NÚMERO DO CRACHÁ SOLICITNANTE
+                                echo "Crachá Solicitante não localizado"  . "<br/>";
+                            }
+
+                        }else {
+                            //CHACHÁ JÁ ESTÁ SALVO NA API
+                            echo "Chachá Solicitante já cadastrado na api." . "<br/>";
+                        }
 
                     }else {
-                        echo "Número Sala e Lock ID não localizado!";
+                        //SE NÃO EXISTIR O LOCK ID REGISTRADO NO BANCO
+                        echo "Número Sala e Lock ID não localizado!"  . "<br/>";
                     }
 
                     echo "<pre>";
