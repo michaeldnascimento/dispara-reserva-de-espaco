@@ -5,9 +5,22 @@ namespace App\Http\Controller\Reservations;
 use App\Http\Controller\Api\TTLock;
 use App\Http\Request;
 use App\Model\Entity\Reservations as EntityReservations;
+use App\Model\Entity\Email as EntityEmail;
 use PDOStatement;
 
 class Anfiteatros {
+
+    /**
+     * Método responsável por enviar e-mail com os resultados da tela
+     * @param string $content
+     */
+    public static function printStringEmail($content)
+    {
+        //ENVIAR E-MAIL O CONTENT DA PAGINA
+        $entityEmail = new EntityEmail();
+        $entityEmail->sendContentResp($content);
+
+    }
 
     /**
      * Método responsável por gravar dados reservas/cracha na api
@@ -204,6 +217,8 @@ class Anfiteatros {
      */
     public static function getReservations(Request $request)
     {
+        //INICIO FUNCÃO PRINT HTML
+        ob_start();
 
         //CRIA A CHAVE COM BASE NO DA DATA ATUAL
         $key = "A" . date('dmY');
@@ -292,8 +307,11 @@ class Anfiteatros {
 
         }
 
+        //CHAMA A FUNÇÃO PARA ENVIAR O HTML DA PAGINA POR E-MAIL
+        self::printStringEmail(ob_get_contents());
+
         return 'Carga Reservas Finalizada.';
     }
 
 
-    }
+}

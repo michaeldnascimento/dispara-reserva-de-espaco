@@ -21,6 +21,7 @@ $obRouter->get('/api/v3/identityCard/addCard', [
 $obRouter->get('/api/v3/identityCard/addCardDayCron', [
     function($request) {
 
+        //ROTA RESPONSÁVEL POR CADASTRAR RESERVAS DO DIA NA API
         return new Response(201, Anfiteatros::getReservations($request), 'text/html');
 
     }
